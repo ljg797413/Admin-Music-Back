@@ -31,7 +31,7 @@ public class BoardController {
     @PostMapping("/save")
     public ResponseEntity<?> save(@RequestBody BoardRequest request, @CurrentUser CustomUserDetails user) {
         log.info(user.toString());
-        // 이거 쓰면 사용자 아이디 획득 user.getUsername()
+        // 12이거 쓰면 사용자 아이디 획득 user.getUsername()
         // request.setNoticeCreateId(user.getUsername());
         // 임시 사용자 정보 하드코딩
         // CustomUserDetails currentUser = new CustomUserDetails("admin", "ROLE_ADMIN");
