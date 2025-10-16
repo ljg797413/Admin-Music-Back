@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.khBootAdmin.mapper.BoardMapper">
+
+    <!-- 게시물 목록 -->
+    <select id="selectBoard" parameterType="SearchHelper" resultType="BoardVO">
+        SELECT
+        A.NOTICE_ID,
+        A.NOTICE_CODE_ID,
+        A.NOTICE_TITLE,
+        A.NOTICE_CONTENT,
+        A.NOTICE_CREATE_ID,
+        A.NOTICE_CREATE_DATE,
+        A.NOTICE_UPDATE_ID,
+        A.NOTICE_UPDATE_DATE
+        FROM ADMIN_NOTICE A
+        <where>
+            <if test="searchCode != null and searchCode != 0">
+                AND A.NOTICE_CODE_ID = #{searchCode}
+            </if>
+            <if test="searchType.equals('title')">
+                AND A.NOTICE_TITLE LIKE '%' || #{searchKeyword} || '%'
+            </if>
+            <if test="searchType.equals('content')">
+                AND A.NOTICE_CONTENT LIKE '%' || #{searchKeyword} || '%'
+            </if>
+            <if test="searchType.equals('all')">
+                AND A.NOTICE_TITLE LIKE '%' || #{searchKeyword} || '%' OR A.NOTICE_CONTENT LIKE '%' || #{searchKeyword} || '%'
+            </if>
+            <if test="noticeCodeId != null">
+                AND A.NOTICE_CODE_ID = #{noticeCodeId}
+            </if>
+        </where>
+        ORDER BY A.NOTICE_ID DESC
+        OFFSET #{page} ROWS FETCH NEXT #{size} ROWS ONLY
+    </select>
+
+    <!-- 게시물 목록 카운트 -->
+    <select id="countBoard" parameterType="SearchHelper" resultType="int">
+        SELECT COUNT(*)
+        FROM ADMIN_NOTICE A
+        <where>
+            <if test="searchCode != null and searchCode != 0">
+                AND A.NOTICE_CODE_ID = #{searchCode}
+            </if>
+            <if test="searchType.equals('title')">
+                AND A.NOTICE_TITLE LIKE '%' || #{searchKeyword} || '%'
+            </if>
+            <if test="searchType.equals('content')">
+                AND A.NOTICE_CONTENT LIKE '%' || #{searchKeyword} || '%'
+            </if>
+            <if test="searchType.equals('all')">
+                AND A.NOTICE_TITLE LIKE '%' || #{searchKeyword} || '%' OR A.NOTICE_CONTENT LIKE '%' || #{searchKeyword} || '%'
+            </if>
+            <if test="noticeCodeId != null">
+                AND A.NOTICE_CODE_ID = #{noticeCodeId}
+            </if>
+        </where>
+    </select>
+
+    <!-- 게시물 저장 -->
+    <insert id="boardSave" parameterType="BoardVO" useGeneratedKeys="true" keyProperty="noticeId" keyColumn="NOTICE_ID">
+        INSERT INTO ADMIN_NOTICE (
+        NOTICE_CODE_ID,
+        NOTICE_TITLE,
+        NOTICE_CONTENT,
+        NOTICE_CREATE_ID,
+        NOTICE_CREATE_DATE,
+        NOTICE_UPDATE_ID,
+        NOTICE_UPDATE_DATE
+        ) VALUES (
+        #{noticeCodeId, jdbcType=BIGINT},
+        #{noticeTitle, jdbcType=VARCHAR},
+        #{noticeContent, jdbcType=VARCHAR},
+        #{noticeCreateId, jdbcType=VARCHAR},
+        SYSDATE,
+        #{noticeUpdateId, jdbcType=VARCHAR},
+        SYSDATE
+        )
+    </insert>
+
+
+    <!-- 게시물 조회 -->
+    <select id="boardInfo" parameterType="Long" resultType="BoardVO">
+        SELECT
+        NOTICE_ID,
+        NOTICE_CODE_ID,
+        NOTICE_TITLE,
+        NOTICE_CONTENT,
+        NOTICE_CREATE_ID,
+        NOTICE_CREATE_DATE,
+        NOTICE_UPDATE_ID,
+        NOTICE_UPDATE_DATE
+        FROM ADMIN_NOTICE
+        WHERE NOTICE_ID = #{noticeId}
+    </select>
+
+    <!-- 게시물 수정 -->
+    <update id="updateBoard" parameterType="BoardVO">
+        UPDATE ADMIN_NOTICE SET
+        NOTICE_TITLE = #{noticeTitle, jdbcType=VARCHAR},
+        NOTICE_CONTENT = #{noticeContent, jdbcType=VARCHAR},
+        NOTICE_UPDATE_ID = #{noticeUpdateId, jdbcType=VARCHAR},
+        NOTICE_UPDATE_DATE = SYSDATE
+        WHERE NOTICE_ID = #{noticeId, jdbcType=BIGINT}
+    </update>
+
+
+    <!-- 게시물 삭제 -->
+    <delete id="deleteBoard" parameterType="Long">
+        DELETE FROM ADMIN_NOTICE
+        WHERE NOTICE_ID = #{noticeId}
+    </delete>
+
+</mapper>

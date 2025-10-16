@@ -1,0 +1,493 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.khBootAdmin.mapper.AdminMapper">
+
+    <!-- 게시물 목록 -->
+    <select id="selectBoard" parameterType="SearchHelper" resultType="BoardVO">
+        SELECT
+        A.NOTICE_ID
+        , A.NOTICE_CODE_ID
+        , A.NOTICE_TITLE
+        , A.NOTICE_CONTENT
+        , A.NOTICE_CREATE_ID
+        , A.NOTICE_CREATE_DATE
+        , A.NOTICE_UPDATE_ID
+        , A.NOTICE_UPDATE_DATE
+        FROM ADMIN_NOTICE A
+        <where>
+            <if test="searchCode != null and searchCode != ''">
+                AND A.NOTICE_CODE_ID = #{searchCode}
+            </if>
+            <if test="searchType.equals('title')">
+                AND A.NOTICE_TITLE LIKE '%' || #{searchKeyword} || '%'
+            </if>
+            <if test="searchType.equals('content')">
+                AND A.NOTICE_CONTENT LIKE '%' || #{searchKeyword} || '%'
+            </if>
+        </where>
+        ORDER BY NOTICE_ID DESC
+        OFFSET #{page} ROWS FETCH NEXT #{size} ROWS ONLY
+    </select>
+
+    <!-- 게시물 목록 카운트 -->
+    <select id="countBoard" parameterType="SearchHelper" resultType="int">
+        SELECT COUNT(*)
+        FROM ADMIN_NOTICE A
+        <where>
+            <if test="searchCode != null and searchCode != ''">
+                AND A.NOTICE_CODE_ID = #{searchCode}
+            </if>
+            <if test="searchType.equals('title')">
+                AND A.NOTICE_TITLE LIKE '%' || #{searchKeyword} || '%'
+            </if>
+            <if test="searchType.equals('content')">
+                AND A.NOTICE_CONTENT LIKE '%' || #{searchKeyword} || '%'
+            </if>
+        </where>
+    </select>
+
+    <!-- 게시물 저장 -->
+    <insert id="boardSave" parameterType="BoardVO" useGeneratedKeys="true" keyProperty="noticeId" keyColumn="NOTICE_ID">
+        INSERT INTO ADMIN_NOTICE (
+        NOTICE_CODE_ID,
+        NOTICE_TITLE,
+        NOTICE_CONTENT,
+        NOTICE_CREATE_ID,
+        NOTICE_CREATE_DATE,
+        NOTICE_UPDATE_ID,
+        NOTICE_UPDATE_DATE
+        ) VALUES (
+        #{noticeCodeId},
+        #{noticeTitle},
+        #{noticeContent},
+        #{noticeCreateId},
+        SYSDATE,
+        #{noticeUpdateId},
+        SYSDATE
+        )
+    </insert>
+
+    <!-- 게시물 조회 -->
+    <select id="boardInfo" parameterType="Long" resultType="BoardVO">
+        SELECT
+        NOTICE_ID,
+        NOTICE_CODE_ID,
+        NOTICE_TITLE,
+        NOTICE_CONTENT,
+        NOTICE_CREATE_ID,
+        NOTICE_CREATE_DATE,
+        NOTICE_UPDATE_ID,
+        NOTICE_UPDATE_DATE
+        FROM ADMIN_NOTICE
+        WHERE NOTICE_ID = #{noticeId}
+    </select>
+
+    <!-- 게시물 수정 -->
+    <update id="updateBoard" parameterType="BoardVO">
+        UPDATE ADMIN_NOTICE SET
+        NOTICE_TITLE = #{noticeTitle},
+        NOTICE_CONTENT = #{noticeContent},
+        NOTICE_UPDATE_ID = #{noticeUpdateId},
+        NOTICE_UPDATE_DATE = SYSDATE
+        WHERE NOTICE_ID = #{noticeId}
+    </update>
+
+    <!-- 게시물 삭제 -->
+    <delete id="deleteBoard" parameterType="Long">
+        DELETE FROM ADMIN_NOTICE
+        WHERE NOTICE_ID = #{noticeId}
+    </delete>
+
+    <!-- depth 1 메뉴 목록 -->
+    <select id="getListByParentIdIsNull" parameterType="MenuVO" resultType="MenuVO">
+        SELECT
+        id, depth, role_id, menu_icon, menu_link, menu_name, parent_id, is_active
+        FROM ADMIN_MENU
+        WHERE is_active = 1 AND parent_id IS NULL AND depth = 1
+        <if test="roleUser == true">
+            AND role_user = 1
+        </if>
+        <if test="roleAdmin == true">
+            AND role_admin = 1
+        </if>
+        <if test="roleSystem == true">
+            AND role_system = 1
+        </if>
+        ORDER BY seq ASC
+    </select>
+
+    <!-- depth n 메뉴 목록 -->
+    <select id="getListByParentIdAndDepth" parameterType="MenuVO" resultType="MenuVO">
+        SELECT
+        id, depth, role_id, menu_icon, menu_link, menu_name, parent_id, is_active
+        FROM ADMIN_MENU
+        WHERE is_active = 1 AND parent_id = #{parentId} AND depth = #{depth}
+        <if test="roleUser == true">
+            AND role_user = 1
+        </if>
+        <if test="roleAdmin == true">
+            AND role_admin = 1
+        </if>
+        <if test="roleSystem == true">
+            AND role_system = 1
+        </if>
+        ORDER BY seq ASC
+    </select>
+
+    <!-- 파일맵 저장 -->
+    <insert id="insertFileMap" parameterType="FileMap">
+        INSERT INTO file_map (
+        board_id,
+        file_id
+        ) VALUES (
+        #{boardId},
+        #{fileId}
+        )
+    </insert>
+
+    <!-- 파일맵 존재 여부 -->
+    <select id="checkFileMap" parameterType="FileMap" resultType="Boolean">
+        SELECT
+        CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END
+        FROM file_map
+        WHERE board_id = #{boardId}
+        AND file_id = #{fileId}
+    </select>
+
+    <!-- 파일 조회 -->
+    <select id="selectFileById" parameterType="Long" resultType="UploadFile">
+        SELECT
+        id,
+        file_name,
+        file_path,
+        file_dir,
+        content_type,
+        file_size,
+        save_file_name
+        FROM upload_file
+        WHERE id = #{id}
+    </select>
+
+    <!-- 파일 조회 -->
+    <select id="selectFileByIdAndFileTarget" parameterType="UploadFile" resultType="UploadFile">
+        SELECT
+        id,
+        file_name,
+        file_path,
+        file_dir,
+        content_type,
+        file_size,
+        save_file_name
+        FROM upload_file
+        WHERE id = #{id}
+        AND file_target = #{fileTarget}
+    </select>
+
+    <!-- save_file_name으로 파일 조회 -->
+    <select id="selectFileAsSaveFileName" parameterType="String" resultType="UploadFile">
+        SELECT
+        id,
+        file_name,
+        file_path,
+        file_dir,
+        content_type,
+        file_size,
+        save_file_name
+        FROM upload_file
+        WHERE save_file_name = #{saveFileName}
+    </select>
+
+    <!-- board_id로 파일 조회 -->
+    <select id="selectFileByBoardId" parameterType="Long" resultType="UploadFile">
+        SELECT
+        u.id,
+        u.file_target,
+        u.file_name,
+        u.file_path,
+        u.file_dir,
+        u.content_type,
+        u.file_size,
+        u.save_file_name,
+        u.created_at
+        FROM file_map f
+        LEFT JOIN upload_file u ON f.file_id = u.id
+        WHERE f.board_id = #{id}
+        ORDER BY u.id ASC
+    </select>
+
+    <!-- 파일 저장 -->
+    <insert id="insertFile" parameterType="UploadFile" useGeneratedKeys="true" keyProperty="id" keyColumn="ID">
+        INSERT INTO upload_file (
+        file_target,
+        file_name,
+        file_path,
+        file_dir,
+        content_type,
+        save_file_name,
+        file_size,
+        created_at
+        ) VALUES (
+        #{fileTarget},
+        #{fileName},
+        #{filePath},
+        #{fileDir},
+        #{contentType},
+        #{saveFileName},
+        #{fileSize},
+        SYSDATE
+        )
+    </insert>
+
+    <!-- 첨부파일 삭제 -->
+    <delete id="deleteByFileByIdAndFileTarget" parameterType="UploadFile" statementType="CALLABLE">
+        BEGIN
+        DELETE FROM file_map WHERE file_id = #{id};
+        DELETE FROM upload_file WHERE id = #{id};
+        END;
+    </delete>
+
+    <insert id="save" parameterType="UserAuthorityVO">
+        INSERT INTO USER_AUTHORITY (USER_ID, ROLE_ID)
+        VALUES (#{userId}, #{roleId})
+    </insert>
+
+    <!-- 이벤트 리스트 -->
+    <select id="selectEventWithPrizes" parameterType="kr.co.khBootAdmin.model.vo.SearchHelper" resultType="kr.co.khBootAdmin.model.vo.EventPrizeDetailVO">
+        SELECT
+        AE.EVENT_ID,
+        AE.EVENT_CODE,
+        AE.EVENT_TITLE,
+        AE.EVENT_CONTENT,
+        AE.EVENT_CREATE_ID,
+        AE.EVENT_CREATE_DATE,
+        AE.EVENT_UPDATE_ID,
+        AE.EVENT_UPDATE_DATE,
+        AE.EVENT_START_DATE,
+        AE.EVENT_END_DATE,
+        EP.PRIZE_ID,
+        EP.PRIZE_NAME,
+        EP.QUANTITY,
+        EP.PRIZE_DESC
+        FROM ADMIN_EVENT AE
+        LEFT JOIN EVENT_PRIZE EP ON AE.EVENT_ID = EP.EVENT_ID
+        <where>
+            <!-- 이벤트 코드 검색 -->
+            <if test="searchCode != null and searchCode != ''">
+                AND AE.EVENT_CODE = #{searchCode}
+            </if>
+            <!-- 제목 또는 내용 검색 -->
+            <if test="searchType != null">
+                <choose>
+                    <when test="searchType.equals('title')">
+                        AND AE.EVENT_TITLE LIKE '%' || #{searchKeyword} || '%'
+                    </when>
+                    <when test="searchType.equals('content')">
+                        AND AE.EVENT_CONTENT LIKE '%' || #{searchKeyword} || '%'
+                    </when>
+                    <!-- 추가적으로 경품 이름으로도 검색하고 싶다면 -->
+                    <when test="searchType.equals('prizeName')">
+                        AND EP.PRIZE_NAME LIKE '%' || #{searchKeyword} || '%'
+                    </when>
+                    <!-- 모든 텍스트 필드에서 검색하고 싶다면 -->
+                    <when test="searchType.equals('all')">
+                        AND (
+                        AE.EVENT_TITLE LIKE '%' || #{searchKeyword} || '%'
+                        OR AE.EVENT_CONTENT LIKE '%' || #{searchKeyword} || '%'
+                        OR EP.PRIZE_NAME LIKE '%' || #{searchKeyword} || '%'
+                        OR EP.PRIZE_DESC LIKE '%' || #{searchKeyword} || '%'
+                        )
+                    </when>
+                </choose>
+            </if>
+            <!-- 특정 기간 내의 이벤트 검색 (예: 현재 진행 중인 이벤트) -->
+            <!-- SearchHelper에 currentOnly, startDate, endDate 등의 필드를 추가하여 활용 가능 -->
+            <!--
+            <if test="currentOnly != null and currentOnly == true">
+                AND SYSTIMESTAMP BETWEEN AE.EVENT_START_DATE AND AE.EVENT_END_DATE
+            </if>
+            <if test="searchStartDate != null">
+                AND AE.EVENT_END_DATE >= #{searchStartDate}
+            </if>
+            <if test="searchEndDate != null">
+                AND AE.EVENT_START_DATE <= #{searchEndDate}
+            </if>
+            -->
+        </where>
+        ORDER BY AE.EVENT_ID DESC
+        OFFSET #{page} ROWS FETCH NEXT #{size} ROWS ONLY
+    </select>
+
+    <!-- 총 이벤트 개수를 세는 쿼리 추가 -->
+    <select id="countEvent" parameterType="kr.co.khBootAdmin.model.vo.SearchHelper" resultType="long">
+        SELECT
+        COUNT(DISTINCT AE.EVENT_ID) -- 중복 이벤트 방지를 위해 DISTINCT 사용
+        FROM ADMIN_EVENT AE
+        LEFT JOIN EVENT_PRIZE EP ON AE.EVENT_ID = EP.EVENT_ID
+        <where>
+            <!-- selectEventWithPrizes와 동일한 검색 조건 사용 -->
+            <if test="searchCode != null and searchCode != ''">
+                AND AE.EVENT_CODE = #{searchCode}
+            </if>
+            <if test="searchType != null">
+                <choose>
+                    <when test="searchType.equals('title')">
+                        AND AE.EVENT_TITLE LIKE '%' || #{searchKeyword} || '%'
+                    </when>
+                    <when test="searchType.equals('content')">
+                        AND AE.EVENT_CONTENT LIKE '%' || #{searchKeyword} || '%'
+                    </when>
+                    <when test="searchType.equals('prizeName')">
+                        AND EP.PRIZE_NAME LIKE '%' || #{searchKeyword} || '%'
+                    </when>
+                    <when test="searchType.equals('all')">
+                        AND (
+                        AE.EVENT_TITLE LIKE '%' || #{searchKeyword} || '%'
+                        OR AE.EVENT_CONTENT LIKE '%' || #{searchKeyword} || '%'
+                        OR EP.PRIZE_NAME LIKE '%' || #{searchKeyword} || '%'
+                        OR EP.PRIZE_DESC LIKE '%' || #{searchKeyword} || '%'
+                        )
+                    </when>
+                </choose>
+            </if>
+        </where>
+    </select>
+
+    <select id="selectEventDetail" parameterType="Long" resultType="kr.co.khBootAdmin.model.EventDetailResponse">
+        SELECT
+        AE.EVENT_ID,
+        AE.EVENT_CODE,
+        AE.EVENT_TITLE,
+        AE.EVENT_CONTENT,
+        AE.EVENT_CREATE_ID,
+        AE.EVENT_CREATE_DATE,
+        AE.EVENT_UPDATE_ID,
+        AE.EVENT_UPDATE_DATE,
+        AE.EVENT_START_DATE,
+        AE.EVENT_END_DATE,
+        EP.PRIZE_ID,
+        EP.PRIZE_NAME,
+        EP.QUANTITY,
+        EP.PRIZE_DESC
+        FROM ADMIN_EVENT AE
+        LEFT JOIN EVENT_PRIZE EP ON AE.EVENT_ID = EP.EVENT_ID
+        WHERE AE.EVENT_ID = #{eventId}
+    </select>
+    
+    <delete id="deleteUser" parameterType="Long">
+        DELETE FROM USERS
+        WHERE USER_ID = #{userId}
+    </delete>
+
+    <delete id="deleteUserAuthorityByUserId" parameterType="Long">
+        DELETE FROM USER_AUTHORITY WHERE USER_Id = #{userId}
+    </delete>
+
+    <update id="deActiveUser" parameterType="Long">
+        UPDATE USERS
+        SET IS_ACTIVE = 0
+        WHERE USER_ID = #{userId}
+    </update>
+
+    <update id="activeUser" parameterType="Long">
+        UPDATE USERS
+        SET IS_ACTIVE = 1
+        WHERE USER_ID = #{userId}
+    </update>
+
+
+        <select id="selectCount" parameterType="TrackVO" resultType="TrackVO">
+            SELECT
+            TR.TRACK_ID,
+            TR.TRACK_NAME,
+            TR.TRACK_ARTIST,
+            TR.TRACK_IMAGE_URL,
+            COUNT(*) AS PLAY_COUNT
+            FROM TRACK_PLAY_DATE PT
+            JOIN TRACK TR ON PT.TRACK_ID = TR.TRACK_ID
+            <where>
+                <if test="trackName != null and trackName != '' ">
+                    TRACK_NAME = #{trackName}
+                </if>
+                <if test="trackArtist != null and trackArtist != '' ">
+                    TRACK_ARTIST = #{trackArtist}
+                </if>
+                <if test="localDate != null">
+                    TRUNC(PT.PLAY_DATE) =  #{localDateStr}
+                </if>
+                <if test="startDate != null and endDate != null">
+                    AND TRUNC(PT.PLAY_DATE)
+                    BETWEEN #{startDateStr} AND #{endDateStr}
+                </if>
+
+            </where>
+            GROUP BY TR.TRACK_ID, TR.TRACK_NAME, TR.TRACK_ARTIST, TR.TRACK_IMAGE_URL
+            ORDER BY COUNT(*) DESC
+            OFFSET #{offset} ROWS FETCH NEXT #{fetch} ROWS ONLY
+        </select>
+
+
+    <resultMap id="followCountMap" type="ArtistVO">
+        <result property="artistName" column="ARTIST_NAME" />
+        <result property="profileImage" column="PROFILE_IMAGE" />
+    </resultMap>
+
+
+    <select id="followCount" parameterType="ArtistVO" resultMap="followCountMap">
+        SELECT
+        AR.ARTIST_NAME,
+        AR.PROFILE_IMAGE,
+        COUNT(*) AS FOLLOW_COUNT
+        FROM ARTIST_FOLLOWS AF
+        JOIN ARTIST AR ON AF.ARTIST_ID = AR.ARTIST_ID
+        <where>
+            <if test="artistName != null and artistName != '' ">
+                AR.ARTIST_NAME = #{artistName}
+            </if>
+            <choose>
+                <when test="localDate != null">
+                    TRUNC(AF.FOLLOW_DATE) =  #{localDateStr}
+                </when>
+                <when test="startDate != null and endDate != null">
+                    AND TO_CHAR(AF.FOLLOW_DATE, 'YYYY-MM-DD')
+                    BETWEEN #{startDateStr} AND #{endDateStr}
+                </when>
+            </choose>
+        </where>
+        GROUP BY AR.ARTIST_NAME, AR.PROFILE_IMAGE
+        ORDER BY FOLLOW_COUNT DESC
+        OFFSET #{offset} ROWS FETCH NEXT #{fetch} ROWS ONLY
+    </select>
+
+    <resultMap id="searchUserMap" type="UserRoleVO">
+        <result property="id" column="USER_ID" />
+        <result property="name" column="NAME" />
+        <result property="email" column="EMAIL" />
+        <result property="active" column="IS_ACTIVE" />
+        <result property="createdAt" column="CREATED_AT" />
+        <result property="roleNo" column="ROLE_NO"/>
+    </resultMap>
+
+    <select id="searchUsers" parameterType="kr.co.khBootAdmin.model.User" resultMap="searchUserMap">
+        SELECT
+        USER_ID,
+        NAME,
+        EMAIL,
+        IS_ACTIVE,
+        CREATED_AT,
+        ROLE_NO
+        FROM USERS
+        <where>
+            <if test="keyword != null and keyword != ''">
+                (
+                LOWER(NAME) LIKE '%' || LOWER(#{keyword}) || '%'
+                OR LOWER(EMAIL) LIKE '%' || LOWER(#{keyword}) || '%'
+                )
+            </if>
+        </where>
+        ORDER BY USER_ID DESC
+    </select>
+
+
+
+
+</mapper>

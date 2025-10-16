@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.khBootAdmin.mapper.BooksMapper">
+
+    <!-- 조회 -->
+    <select id="selectList" parameterType="BooksVO" resultType="BooksVO">
+        SELECT * FROM BOOKS
+        ORDER BY BOOK_ID DESC
+    </select>
+
+    <!-- 데이터 삽입 -->
+    <insert id="insert" parameterType="BooksVO">
+        INSERT INTO BOOKS (
+        TITLE, AUTHOR, CATEGORY, ISBN, PRICE,
+        PUBLISHED_DATE, CREATED_BY, UPDATED_BY
+        ) VALUES (
+       #{title}, #{author}, #{category}, #{isbn}, #{price},
+        #{publishedDate}, #{createdBy}, #{updatedBy}
+        )
+    </insert>
+
+    <!-- 수정 -->
+    <update id="update" parameterType="BooksVO">
+        UPDATE BOOKS SET
+        TITLE = #{title},
+        AUTHOR = #{author},
+        CATEGORY = #{category},
+        ISBN = #{isbn},
+        PRICE = #{price},
+        PUBLISHED_DATE = #{publishedDate},
+        UPDATED_BY = #{updatedBy},
+        UPDATED_AT = SYSDATE
+        WHERE BOOK_ID = #{bookId}
+    </update>
+
+    <!-- 삭제 -->
+    <delete id="delete" parameterType="Long">
+        DELETE FROM BOOKS WHERE BOOK_ID = #{bookId}
+    </delete>
+
+</mapper>

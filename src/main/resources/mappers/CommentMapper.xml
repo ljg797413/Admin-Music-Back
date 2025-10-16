@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.khBootAdmin.mapper.CommentReportMapper">
+
+    <resultMap id="CommentReportMap" type="kr.co.khBootAdmin.model.vo.CommentReportVO">
+        <id property="reportId" column="REPORT_ID" />
+        <result property="reportReason" column="REPORT_REASON" />
+        <result property="reportDate" column="REPORT_DATE" />
+
+        <!-- 신고자 -->
+<!--        <association property="reporter" javaType="kr.co.khBootAdmin.model.User">-->
+<!--            <id property="id" column="REPORTER_ID" />-->
+<!--            <result property="userNickname" column="REPORTER_NICKNAME" />-->
+<!--        </association>-->
+
+        <association property="reporter" javaType="kr.co.khBootAdmin.model.User">
+            <id column="REPORTER_ID" property="id"/>
+            <result column="REPORTER_EMAIL" property="email"/>
+        </association>
+
+        <!-- 댓글 -->
+        <association property="comment" javaType="kr.co.khBootAdmin.model.vo.CommentsVO">
+            <id property="commentId" column="COMMENT_ID" />
+            <result property="content" column="COMMENT_CONTENT" />
+
+            <!-- 댓글 작성자 -->
+            <association property="writer" javaType="kr.co.khBootAdmin.model.User">
+                <id property="id" column="WRITER_ID" />
+                <result property="name" column="WRITER_NAME" />
+                <result property="email" column="WRITER_EMAIL" />
+            </association>
+        </association>
+    </resultMap>
+
+    <select id="selectReportedComments" resultMap="CommentReportMap">
+        SELECT
+        cr.REPORT_ID,
+        cr.REPORT_REASON,
+        cr.REPORT_DATE,
+
+        c.COMMENT_ID,
+        c.CONTENT AS COMMENT_CONTENT,
+
+        reporter.USER_ID AS REPORTER_ID,
+        reporter.EMAIL AS REPORTER_EMAIL,
+
+        writer.USER_ID AS WRITER_ID,
+        writer.NAME AS WRITER_NAME,
+        writer.EMAIL AS WRITER_EMAIL
+        FROM COMMENT_REPORT cr
+        LEFT JOIN COMMENTS c ON cr.COMMENT_ID = c.COMMENT_ID
+        LEFT JOIN USERS reporter ON cr.USER_ID = reporter.USER_ID
+        LEFT JOIN USERS writer ON c.USER_ID = writer.USER_ID
+        ORDER BY cr.REPORT_DATE DESC
+    </select>
+
+</mapper>
